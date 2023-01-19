@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NewsEvent;
 use App\Models\News;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,9 +22,11 @@ class NewsController extends Controller
     public function index()
     {
         $news = News::paginate(10);
-        return response()->json([
+        $response = [
+            'message' => 'Success',
             'data' => $news
-        ]);
+        ];
+        return response($response, Response::HTTP_OK);
     }
 
     /**
@@ -34,26 +37,34 @@ class NewsController extends Controller
      */
     public function store(Request $request)
     {
-        if ($request->user()->tokenCan('crud-news')) {
-            $this->validate($request, [
-                'title' => ['required', 'max:255'],
-                'image' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
-                'body' => ['required']
-            ]);
-
-            $image_path = $request->file('image')->store('image', 'public');
-
-            $data = News::create([
-                'title' => $request->title,
-                'image' => $image_path,
-                'body' => $request->body
-            ]);
-
-            return response($data, Response::HTTP_CREATED);
-        } else {
-            $response = ['message' => 'User does not have access to post a news'];
-            return response($response, 403);
+        if ($request->user()->cannot('create', News::class)) {
+            $response = [
+                'message' => 'User does not have an access to create a news'
+            ];
+            return response($response, Response::HTTP_FORBIDDEN);
         }
+
+        $this->validate($request, [
+            'title' => ['required', 'max:255'],
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'body' => ['required']
+        ]);
+
+        $image_path = $request->file('image')->store('image', 'public');
+
+        $news = News::create([
+            'title' => $request->title,
+            'image' => $image_path,
+            'body' => $request->body
+        ]);
+
+        event(new NewsEvent($news, 'create'));
+
+        $response = [
+            'message' => 'Success',
+            'data' => $news
+        ];
+        return response($response, Response::HTTP_CREATED);
     }
 
     /**
@@ -64,9 +75,11 @@ class NewsController extends Controller
      */
     public function show(News $news)
     {
-        return response()->json([
+        $response = [
+            'message' => 'Success',
             'data' => $news
-        ]);
+        ];
+        return response($response, Response::HTTP_OK);
     }
 
     /**
@@ -78,18 +91,24 @@ class NewsController extends Controller
      */
     public function update(Request $request, News $news)
     {
-        if ($request->user()->tokenCan('crud-news')) {
-            $news->title = $request->title;
-            $news->body = $request->body;
-            $news->save();
-
-            return response()->json([
-                'data' => $news
-            ]);
-        } else {
-            $response = ['message' => 'User does not have access to update a news'];
-            return response($response, 403);
+        if ($request->user()->cannot('update', $news)) {
+            $response = [
+                'message' => 'User does not have an access to update a news'
+            ];
+            return response($response, Response::HTTP_FORBIDDEN);
         }
+
+        $news->title = $request->title;
+        $news->body = $request->body;
+        $news->save();
+
+        event(new NewsEvent($news, 'update'));
+
+        $response = [
+            'message' => 'Success',
+            'data' => $news
+        ];
+        return response($response, Response::HTTP_OK);
     }
 
     /**
@@ -100,14 +119,20 @@ class NewsController extends Controller
      */
     public function destroy(Request $request, News $news)
     {
-        if ($request->user()->tokenCan('crud-news')) {
-            $news->delete();
-            return response()->json([
-                'message' => 'News deleted'
-            ], 200);
-        } else {
-            $response = ['message' => 'User does not have access to delete a news'];
-            return response($response, 403);
+        if ($request->user()->cannot('delete', $news)) {
+            $response = [
+                'message' => 'User does not have an access to delete a news'
+            ];
+            return response($response, Response::HTTP_FORBIDDEN);
         }
+
+        $news->delete();
+
+        event(new NewsEvent($news, 'delete'));
+
+        $response = [
+            'message' => 'Success'
+        ];
+        return response($response, Response::HTTP_OK);
     }
 }
