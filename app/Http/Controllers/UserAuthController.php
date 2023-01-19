@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class UserAuthController extends Controller
 {
@@ -14,7 +15,10 @@ class UserAuthController extends Controller
         ]);
 
         if (!auth()->attempt($data)) {
-            return response(['message' => 'Wrong username or password']);
+            $response = [
+                'message' => 'Wrong username or password'
+            ];
+            return response($response, Response::HTTP_UNAUTHORIZED);
         }
 
         $scope = ['post-comment'];
@@ -24,12 +28,20 @@ class UserAuthController extends Controller
 
         $token = auth()->user()->createToken('Access Token', $scope)->accessToken;
 
-        return response(['message' => 'Successfully logged in', 'user' => auth()->user(), 'token' => $token]);
+        $response = [
+            'message' => 'Success',
+            'user' => auth()->user(),
+            'token' => $token
+        ];
+        return response($response, Response::HTTP_OK);
     }
 
     public function logout(Request $request)
     {
         $request->user()->token()->revoke();
-        return response(['message' => 'Successfully logged out']);
+        $response = [
+            'message' => 'Success'
+        ];
+        return response($response, Response::HTTP_OK);
     }
 }
