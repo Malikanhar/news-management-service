@@ -1,6 +1,7 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\NewsController;
+use App\Http\Controllers\UserAuthController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::middleware(['cors', 'json.response'])->group(function () {
+    Route::post('/login', [UserAuthController::class, 'login']);
+    Route::post('/logout', [UserAuthController::class, 'logout'])->middleware('auth:api');
+    Route::apiResource('/news', NewsController::class);
 });
