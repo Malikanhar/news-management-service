@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Events\NewsEvent;
+use App\Http\Resources\NewsResource;
 use App\Models\News;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 
 class NewsController extends Controller
@@ -22,11 +24,9 @@ class NewsController extends Controller
     public function index()
     {
         $news = News::paginate(10);
-        $response = [
-            'message' => 'Success',
-            'data' => $news
-        ];
-        return response($response, Response::HTTP_OK);
+        return (new NewsResource('Success', $news))
+            ->response()
+            ->setStatusCode(Response::HTTP_OK);
     }
 
     /**
@@ -38,10 +38,9 @@ class NewsController extends Controller
     public function store(Request $request)
     {
         if ($request->user()->cannot('create', News::class)) {
-            $response = [
-                'message' => 'User does not have an access to create a news'
-            ];
-            return response($response, Response::HTTP_FORBIDDEN);
+            return (new NewsResource('User does not have an access to create a news', null))
+                ->response()
+                ->setStatusCode(Response::HTTP_FORBIDDEN);
         }
 
         $this->validate($request, [
@@ -60,11 +59,9 @@ class NewsController extends Controller
 
         event(new NewsEvent($news, 'create'));
 
-        $response = [
-            'message' => 'Success',
-            'data' => $news
-        ];
-        return response($response, Response::HTTP_CREATED);
+        return (new NewsResource('Success', $news))
+            ->response()
+            ->setStatusCode(Response::HTTP_OK);
     }
 
     /**
@@ -75,11 +72,9 @@ class NewsController extends Controller
      */
     public function show(News $news)
     {
-        $response = [
-            'message' => 'Success',
-            'data' => $news
-        ];
-        return response($response, Response::HTTP_OK);
+        return (new NewsResource('Success', $news))
+            ->response()
+            ->setStatusCode(Response::HTTP_OK);
     }
 
     /**
@@ -92,10 +87,9 @@ class NewsController extends Controller
     public function update(Request $request, News $news)
     {
         if ($request->user()->cannot('update', $news)) {
-            $response = [
-                'message' => 'User does not have an access to update a news'
-            ];
-            return response($response, Response::HTTP_FORBIDDEN);
+            return (new NewsResource('User does not have an access to update a news', null))
+                ->response()
+                ->setStatusCode(Response::HTTP_FORBIDDEN);
         }
 
         $news->title = $request->title;
@@ -104,11 +98,9 @@ class NewsController extends Controller
 
         event(new NewsEvent($news, 'update'));
 
-        $response = [
-            'message' => 'Success',
-            'data' => $news
-        ];
-        return response($response, Response::HTTP_OK);
+        return (new NewsResource('Success', $news))
+            ->response()
+            ->setStatusCode(Response::HTTP_OK);
     }
 
     /**
@@ -120,19 +112,19 @@ class NewsController extends Controller
     public function destroy(Request $request, News $news)
     {
         if ($request->user()->cannot('delete', $news)) {
-            $response = [
-                'message' => 'User does not have an access to delete a news'
-            ];
-            return response($response, Response::HTTP_FORBIDDEN);
+            return (new NewsResource('User does not have an access to delete a news', null))
+                ->response()
+                ->setStatusCode(Response::HTTP_FORBIDDEN);
         }
+
+        Storage::delete('public/' . $news->image);
 
         $news->delete();
 
         event(new NewsEvent($news, 'delete'));
 
-        $response = [
-            'message' => 'Success'
-        ];
-        return response($response, Response::HTTP_OK);
+        return (new NewsResource('Success', null))
+            ->response()
+            ->setStatusCode(Response::HTTP_OK);
     }
 }
