@@ -72,7 +72,7 @@ class NewsController extends Controller
      */
     public function show(News $news)
     {
-        return (new NewsResource('Success', $news))
+        return (new NewsResource('Success', $news->load('comments')))
             ->response()
             ->setStatusCode(Response::HTTP_OK);
     }
