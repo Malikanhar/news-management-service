@@ -19,4 +19,13 @@ class Comment extends Model
         'news_id',
         'body',
     ];
+
+    public function post(string $user_id, string $news_id, string $body)
+    {
+        Comment::create([
+            'user_id' => $user_id,
+            'news_id' => $news_id,
+            'body' => $body,
+        ]);
+    }
 }
