@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class News extends Model
+class Comment extends Model
 {
     use HasFactory;
 
@@ -15,13 +15,17 @@ class News extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'title',
-        'image',
+        'user_id',
+        'news_id',
         'body',
     ];
 
-    public function comments()
+    public function post(string $user_id, string $news_id, string $body)
     {
-        return $this->hasMany(Comment::class);
+        Comment::create([
+            'user_id' => $user_id,
+            'news_id' => $news_id,
+            'body' => $body,
+        ]);
     }
 }

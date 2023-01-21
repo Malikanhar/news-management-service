@@ -72,7 +72,7 @@ class NewsController extends Controller
      */
     public function show(News $news)
     {
-        return (new NewsResource('Success', $news))
+        return (new NewsResource('Success', $news->load('comments')))
             ->response()
             ->setStatusCode(Response::HTTP_OK);
     }
@@ -119,6 +119,7 @@ class NewsController extends Controller
 
         Storage::delete('public/' . $news->image);
 
+        $news->comments()->delete();
         $news->delete();
 
         event(new NewsEvent($news, 'delete'));
