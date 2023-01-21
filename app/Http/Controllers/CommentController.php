@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\CommentResource;
+use App\Jobs\CommentCreation;
 use App\Models\Comment;
 use App\Models\News;
 use Illuminate\Http\Request;
@@ -41,11 +42,13 @@ class CommentController extends Controller
             'body' => ['required', 'max:255']
         ]);
 
-        $comment = Comment::create([
+        $comment = new Comment([
             'user_id' => $request->user()->id,
             'news_id' => $request->news_id,
             'body' => $request->body
         ]);
+
+        CommentCreation::dispatch($comment->toArray());
 
         return (new CommentResource('Success', $comment))
             ->response()
