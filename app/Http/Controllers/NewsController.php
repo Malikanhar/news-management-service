@@ -119,6 +119,7 @@ class NewsController extends Controller
 
         Storage::delete('public/' . $news->image);
 
+        $news->comments()->delete();
         $news->delete();
 
         event(new NewsEvent($news, 'delete'));
