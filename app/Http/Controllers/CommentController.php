@@ -34,7 +34,7 @@ class CommentController extends Controller
         if ($news === null) {
             return (new CommentResource('News not found! Unable to post your comment.', null))
                 ->response()
-                ->setStatusCode(Response::HTTP_PRECONDITION_FAILED);
+                ->setStatusCode(Response::HTTP_NOT_FOUND);
         }
 
         $this->validate($request, [
